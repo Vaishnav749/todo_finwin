@@ -4,25 +4,25 @@ import '../model/taskmodel.dart';
 import '../provider/addpageprovider.dart';
 
 class AddTaskPage extends StatelessWidget {
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final String? initialPriority;
   final Task? task;
   final int? index;
 
-  AddTaskPage({this.task, this.index, Key? key}) : initialPriority = task?.priority, super(key: key);
+  AddTaskPage({this.task, this.index});
+
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  String selectedPriority = 'Low';
 
   @override
   Widget build(BuildContext context) {
-    // Set initial values if editing
     if (task != null) {
       titleController.text = task!.title;
       descriptionController.text = task!.description ?? '';
+      selectedPriority = task!.priority;
     }
-    String selectedPriority = initialPriority ?? 'Low';
 
     return Scaffold(
-      appBar: AppBar(title: Text(task == null ? "Add Task" : "Edit Task")),
+      appBar: AppBar(title: const Text("Add/Edit Task")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -41,6 +41,7 @@ class AddTaskPage extends StatelessWidget {
               maxLines: 4,
               decoration: const InputDecoration(
                 labelText: 'Task Description',
+                alignLabelWithHint: true,
                 border: OutlineInputBorder(),
               ),
             ),
@@ -57,11 +58,9 @@ class AddTaskPage extends StatelessWidget {
                   child: Text(value),
                 );
               }).toList(),
-              decoration: InputDecoration(
-                labelText: "Priority",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
+              decoration: const InputDecoration(
+                labelText: 'Priority',
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 30),
@@ -72,22 +71,17 @@ class AddTaskPage extends StatelessWidget {
                     title: titleController.text,
                     description: descriptionController.text,
                     priority: selectedPriority,
-                    isCompleted: task?.isCompleted ?? false, // Preserve the completion state
                   );
 
-                  final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-
                   if (task == null) {
-                    // Add new task
-                    taskProvider.addTask(newTask);
-                  } else if (index != null) {
-                    // Edit existing task
-                    taskProvider.editTask(index!, newTask);
+                    Provider.of<TaskProvider>(context, listen: false).addTask(newTask);
+                  } else {
+                    Provider.of<TaskProvider>(context, listen: false).editTask(index!, newTask);
                   }
 
                   Navigator.pop(context);
                 },
-                child: Text(task == null ? 'Save Task' : 'Update Task'),
+                child: const Text('Save Task'),
               ),
             ),
           ],

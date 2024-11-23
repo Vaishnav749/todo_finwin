@@ -1,12 +1,14 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../model/taskmodel.dart';
 
 class TaskProvider with ChangeNotifier {
   List<Task> _tasks = [];
+  List<Task> _completedTasks = [];
 
   List<Task> get tasks => _tasks;
+  List<Task> get completedTasks => _completedTasks;
 
   TaskProvider() {
     _loadTasks();
@@ -15,17 +17,28 @@ class TaskProvider with ChangeNotifier {
   Future<void> _loadTasks() async {
     final prefs = await SharedPreferences.getInstance();
     final taskList = prefs.getString('tasks');
+    final completedList = prefs.getString('completedTasks');
+
     if (taskList != null) {
-      final taskJson = jsonDecode(taskList) as List;
+      List<dynamic> taskJson = jsonDecode(taskList);
       _tasks = taskJson.map((task) => Task.fromJson(task)).toList();
-      notifyListeners();
     }
+
+    if (completedList != null) {
+      List<dynamic> completedJson = jsonDecode(completedList);
+      _completedTasks =
+          completedJson.map((task) => Task.fromJson(task)).toList();
+    }
+
+    notifyListeners();
   }
 
   Future<void> _saveTasks() async {
     final prefs = await SharedPreferences.getInstance();
-    final tasksJson = _tasks.map((task) => task.toJson()).toList();
-    prefs.setString('tasks', jsonEncode(tasksJson));
+    prefs.setString(
+        'tasks', jsonEncode(_tasks.map((task) => task.toJson()).toList()));
+    prefs.setString('completedTasks',
+        jsonEncode(_completedTasks.map((task) => task.toJson()).toList()));
   }
 
   void addTask(Task task) {
@@ -43,32 +56,26 @@ class TaskProvider with ChangeNotifier {
   }
 
   void deleteTask(int index) {
-    if (index >= 0 && index < _tasks.length) {
-      _tasks.removeAt(index);
-      _saveTasks();
-      notifyListeners();
-    }
+    _tasks.removeAt(index);
+    _saveTasks();
+    notifyListeners();
+  }
+
+  void deleteCompletedTask(int index) {
+    _completedTasks.removeAt(index);
+    _saveTasks();
+    notifyListeners();
   }
 
   void markTaskCompleted(int index) {
-    if (index >= 0 && index < _tasks.length) {
-      _tasks[index].isCompleted = !_tasks[index].isCompleted;
-      _saveTasks();
-      notifyListeners();
-    }
+    Task completedTask = _tasks.removeAt(index);
+    completedTask.isCompleted = true;
+    _completedTasks.add(completedTask);
+    _saveTasks();
+    notifyListeners();
   }
 
   List<Task> tasksByPriority(String priority) {
     return _tasks.where((task) => task.priority == priority).toList();
-  }
-
-  List<Task> get completedTasks {
-    return _tasks.where((task) => task.isCompleted).toList();
-  }
-
-  void clearCompletedTasks() {
-    _tasks.removeWhere((task) => task.isCompleted);
-    _saveTasks();
-    notifyListeners();
   }
 }
