@@ -1,69 +1,97 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../model/taskmodel.dart';
+import '../provider/addpageprovider.dart';
 
-class Addpage extends StatefulWidget {
-  const Addpage({super.key});
+class AddTaskPage extends StatelessWidget {
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
+  final String? initialPriority;
+  final Task? task;
+  final int? index;
 
-  @override
-  State<Addpage> createState() => _AddpageState();
-}
-
-class _AddpageState extends State<Addpage> {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
+  AddTaskPage({this.task, this.index, Key? key}) : initialPriority = task?.priority, super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Set initial values if editing
+    if (task != null) {
+      titleController.text = task!.title;
+      descriptionController.text = task!.description ?? '';
+    }
+    String selectedPriority = initialPriority ?? 'Low';
+
     return Scaffold(
-      appBar: AppBar(
-        elevation: 1,
-        title: const Center(
-          child: Text("Add Task"),
-        ),
-      ),
+      appBar: AppBar(title: Text(task == null ? "Add Task" : "Edit Task")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
             TextField(
               controller: titleController,
               decoration: const InputDecoration(
-                hintText: "Task Title",
+                labelText: 'Task Title',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: descriptionController,
+              maxLines: 4,
               decoration: const InputDecoration(
-                hintText: "Task Description (Optional)",
+                labelText: 'Task Description',
                 border: OutlineInputBorder(),
               ),
-              maxLines: 4,
+            ),
+            const SizedBox(height: 20),
+            DropdownButtonFormField<String>(
+              value: selectedPriority,
+              onChanged: (String? newValue) {
+                selectedPriority = newValue!;
+              },
+              items: <String>['Low', 'Medium', 'High']
+                  .map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              decoration: InputDecoration(
+                labelText: "Priority",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  final newTask = Task(
+                    title: titleController.text,
+                    description: descriptionController.text,
+                    priority: selectedPriority,
+                    isCompleted: task?.isCompleted ?? false, // Preserve the completion state
+                  );
+
+                  final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+
+                  if (task == null) {
+                    // Add new task
+                    taskProvider.addTask(newTask);
+                  } else if (index != null) {
+                    // Edit existing task
+                    taskProvider.editTask(index!, newTask);
+                  }
+
+                  Navigator.pop(context);
+                },
+                child: Text(task == null ? 'Save Task' : 'Update Task'),
+              ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          final title = titleController.text.trim();
-          final description = descriptionController.text.trim();
-
-          if (title.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Task title is required!")),
-            );
-            return;
-          }
-
-          // Return the task to the previous screen
-          Navigator.pop(context, {
-            'title': title,
-            'description': description,
-          });
-        },
-        label: const Text("Save Task"),
       ),
     );
   }
