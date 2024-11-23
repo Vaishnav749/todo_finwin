@@ -16,9 +16,11 @@ class _TaskListPageState extends State<TaskListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Task List',
-          style: TextStyle(fontSize: 28),
+        title: Center(
+          child: const Text(
+            'Todo List',
+            style: TextStyle(fontSize: 28),
+          ),
         ),
         backgroundColor: Colors.black,
       ),
