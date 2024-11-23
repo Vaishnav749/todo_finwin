@@ -8,7 +8,7 @@ class TaskListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Task List')),
+      appBar: AppBar(title: const Text('Task List',style: TextStyle(fontSize: 28),),backgroundColor: Colors.black,),
       body: Consumer<TaskProvider>(
         builder: (context, taskProvider, child) {
           return ListView(
